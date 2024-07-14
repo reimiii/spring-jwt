@@ -18,4 +18,11 @@ public class AuthController {
   ) {
     // meh
   }
+
+  @PostMapping("/authenticate")
+  public ResponseEntity<AuthResponse> register(
+      @RequestBody AuthRequest request
+  ) {
+    // meh
+  }
 }
