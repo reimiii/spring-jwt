@@ -1,5 +1,6 @@
 package franxx.code.jwt.user;
 
+import franxx.code.jwt.token.Token;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,6 +28,9 @@ public class User implements UserDetails {
   private String lastName;
   private String email;
   private String password;
+
+  @OneToMany(mappedBy = "user")
+  private List<Token> tokens;
 
   @Enumerated(EnumType.STRING)
   private Role role;
