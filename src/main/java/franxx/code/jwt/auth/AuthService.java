@@ -1,6 +1,9 @@
 package franxx.code.jwt.auth;
 
 import franxx.code.jwt.config.JwtService;
+import franxx.code.jwt.token.Token;
+import franxx.code.jwt.token.TokenRepository;
+import franxx.code.jwt.token.TokenType;
 import franxx.code.jwt.user.Role;
 import franxx.code.jwt.user.User;
 import franxx.code.jwt.user.UserRepository;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
   private final UserRepository repository;
+  private final TokenRepository tokenRepository;
   private final PasswordEncoder encoder;
   private final JwtService jwtService;
   private final AuthenticationManager authenticationManager;
@@ -30,11 +34,13 @@ public class AuthService {
         .role(Role.USER)
         .build();
 
-    repository.save(user);
-    String token = jwtService.generateToken(user);
+    var savedUser = repository.save(user);
+    var jwtToken = jwtService.generateToken(user);
+    saveUserToken(savedUser, jwtToken);
 
-    return AuthResponse.builder().token(token).build();
+    return AuthResponse.builder().token(jwtToken).build();
   }
+
 
   @Transactional
   public AuthResponse authenticate(AuthRequest request) {
@@ -50,6 +56,33 @@ public class AuthService {
 
     String token = jwtService.generateToken(user);
 
+    revokeAllUserTokens(user);
+
+    saveUserToken(user, token);
+
     return AuthResponse.builder().token(token).build();
+  }
+
+  private void saveUserToken(User user, String jwtToken) {
+    var token = Token.builder()
+        .user(user)
+        .token(jwtToken)
+        .tokenType(TokenType.BEARER)
+        .expired(false)
+        .revoked(false)
+        .build();
+
+    tokenRepository.save(token);
+  }
+
+  private void revokeAllUserTokens(User user) {
+    var validUserTokens = tokenRepository.findAllValidTokensByUser(user.getId());
+    if (validUserTokens.isEmpty()) return;
+    validUserTokens.forEach(token -> {
+      token.setRevoked(true);
+      token.setExpired(true);
+    });
+
+    tokenRepository.saveAll(validUserTokens);
   }
 }
