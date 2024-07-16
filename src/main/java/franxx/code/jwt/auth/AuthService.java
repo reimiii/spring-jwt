@@ -52,6 +52,27 @@ public class AuthService {
         .build();
   }
 
+  @Transactional
+  public AuthResponse registerWithRole(RegisterWithRoleRequest request) {
+    var user = User.builder()
+        .firstName(request.getFirstName())
+        .lastName(request.getLastName())
+        .email(request.getEmail())
+        .password(encoder.encode(request.getPassword()))
+        .role(request.getRole())
+        .build();
+
+    var savedUser = repository.save(user);
+    var jwtToken = jwtService.generateToken(user);
+    var refreshToken = jwtService.generateRefreshToken(user);
+
+    saveUserToken(savedUser, jwtToken);
+
+    return AuthResponse.builder()
+        .accessToken(jwtToken)
+        .refreshToken(refreshToken)
+        .build();
+  }
 
   @Transactional
   public AuthResponse authenticate(AuthRequest request) {

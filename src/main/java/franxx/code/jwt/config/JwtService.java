@@ -22,7 +22,7 @@ public class JwtService {
 
   @Value("${jwt.secret.key}")
   private String secretKey;
-  private static final Long VALID_TOKEN_EXPIRATION = TimeUnit.MINUTES.toMillis(1);
+  private static final Long VALID_TOKEN_EXPIRATION = TimeUnit.HOURS.toMillis(8);
   private static final Long REFRESH_TOKEN_EXPIRATION = TimeUnit.DAYS.toMillis(7);
 
   public String extractUsername(String token) {
